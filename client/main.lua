@@ -170,6 +170,20 @@ Citizen.CreateThread(function()
 	end)
 end)
 
+-- Creating blips
+
+Citizen.CreateThread(function()
+	for k, v in pairs(Config.ParkingLocations) do
+		local tempBlip = AddBlipForCoord(v.enter.x, v.enter.y, v.enter.z)
+		SetBlipSprite(tempBlip, 523)
+		SetBlipColour(tempBlip, 11)
+		SetBlipAsShortRange(tempBlip, true)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(v.name)
+		EndTextCommandSetBlipName(tempBlip)
+	end
+end)
+
 -- Draw text thread
 
 Citizen.CreateThread(function()
