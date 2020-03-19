@@ -18,6 +18,21 @@ AddEventHandler("esx_realparking:refreshVehicles", function(vehicles)
 	SpawnVehicles(vehicles)
 end)
 
+RegisterNetEvent("esx_realparking:addVehicle")
+AddEventHandler("esx_realparking:addVehicle", function(vehicle)
+	SpawnVehicle(vehicle)
+end)
+
+RegisterNetEvent("esx_realparking:deleteVehicle")
+AddEventHandler("esx_realparking:deleteVehicle", function(vehicle)
+	DeleteLocalVehicle(vehicle)
+end)
+
+RegisterNetEvent("esx_realparking:impoundVehicle")
+AddEventHandler("esx_realparking:impoundVehicle", function(vehicle)
+	ImpoundVehicle(vehicle)
+end)
+
 -- Get the stored vehicle player is in
 
 function GetPedInStoredCar(ped)
@@ -35,40 +50,84 @@ end
 -- Spawn local vehicles
 
 function SpawnVehicles(vehicles)
-	for i = 1, #vehicles, 1 do
-		local vehicleProps = vehicles[i].vehicle.props
+	Citizen.CreateThread(function()
+		for i = 1, #vehicles, 1 do
+			local vehicleProps = vehicles[i].vehicle.props
+			local carLivery    = -1
+			if type(vehicles[i].vehicle.livery) ~= 'nil' then
+				carLivery = vehicles[i].vehicle.livery
+			end
+			LoadModel(vehicleProps["model"])
+			local tempVeh = CreateVehicle(vehicleProps["model"], vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z, vehicles[i].vehicle.location.h, false)
+			ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
+			SetVehicleOnGroundProperly(tempVeh)
+			SetEntityAsMissionEntity(tempVeh, true, true)
+			SetModelAsNoLongerNeeded(vehicleProps["model"])
+			SetEntityInvincible(tempVeh, true)
+			SetVehicleLivery(tempVeh, vehicles[i].vehicle.livery)
+			Wait(100)
+			FreezeEntityPosition(tempVeh, true)
+			if vehicles[i].owner ~= PlayerData.identifier then
+				SetVehicleDoorsLocked(tempVeh, 2)
+			end
+			table.insert(LocalVehicles, {
+				entity = tempVeh,
+				data   = vehicles[i].vehicle,
+				plate  = vehicles[i].plate,
+				fee    = vehicles[i].fee,
+				owner  = vehicles[i].owner,
+				name   = vehicles[i].name,
+				livery = carLivery,
+			})
+			if LastPlate ~= nil and vehicles[i].plate == LastPlate then
+				TaskWarpPedIntoVehicle(GetPlayerPed(-1), tempVeh, -1)
+				Wait(500)
+				TaskLeaveVehicle(GetPlayerPed(-1), tempVeh)
+				LastPlate = nil
+			end
+			Wait(100)
+		end
+	end)
+end
+
+-- Spawn single vehicle
+
+function SpawnVehicle(vehicleData)
+	Citizen.CreateThread(function()
+		local vehicleProps = vehicleData.vehicle.props
 		local carLivery    = -1
-		if type(vehicles[i].vehicle.livery) ~= 'nil' then
-			carLivery = vehicles[i].vehicle.livery
+		if type(vehicleData.vehicle.livery) ~= 'nil' then
+			carLivery = vehicleData.vehicle.livery
 		end
 		LoadModel(vehicleProps["model"])
-		local tempVeh = CreateVehicle(vehicleProps["model"], vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z, vehicles[i].vehicle.location.h, false)
+		local tempVeh = CreateVehicle(vehicleProps["model"], vehicleData.vehicle.location.x, vehicleData.vehicle.location.y, vehicleData.vehicle.location.z, vehicleData.vehicle.location.h, false)
 		ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
-		FreezeEntityPosition(tempVeh, true)
 		SetVehicleOnGroundProperly(tempVeh)
 		SetEntityAsMissionEntity(tempVeh, true, true)
 		SetModelAsNoLongerNeeded(vehicleProps["model"])
 		SetEntityInvincible(tempVeh, true)
-		SetVehicleLivery(tempVeh, vehicles[i].vehicle.livery)
-		if vehicles[i].owner ~= PlayerData.identifier then
+		SetVehicleLivery(tempVeh, vehicleData.vehicle.livery)
+		Wait(100)
+		FreezeEntityPosition(tempVeh, true)
+		if vehicleData.owner ~= PlayerData.identifier then
 			SetVehicleDoorsLocked(tempVeh, 2)
 		end
 		table.insert(LocalVehicles, {
 			entity = tempVeh,
-			data   = vehicles[i].vehicle,
-			plate  = vehicles[i].plate,
-			fee    = vehicles[i].fee,
-			owner  = vehicles[i].owner,
-			name   = vehicles[i].name,
+			data   = vehicleData.vehicle,
+			plate  = vehicleData.plate,
+			fee    = vehicleData.fee,
+			owner  = vehicleData.owner,
+			name   = vehicleData.name,
 			livery = carLivery,
 		})
-		if LastPlate ~= nil and vehicles[i].plate == LastPlate then
+		if LastPlate ~= nil and vehicleData.plate == LastPlate then
 			TaskWarpPedIntoVehicle(GetPlayerPed(-1), tempVeh, -1)
 			Wait(500)
 			TaskLeaveVehicle(GetPlayerPed(-1), tempVeh)
 			LastPlate = nil
 		end
-	end
+	end)
 end
 
 -- When player drive the car
@@ -108,6 +167,34 @@ function RemoveVehicles()
 		end
 	end
 	LocalVehicles = {}
+end
+
+-- Delete single vehicle
+
+function DeleteLocalVehicle(vehicle)
+	for i = 1, #LocalVehicles do
+		if type(vehicle.plate) ~= 'nil' and type(LocalVehicles[i].plate) ~= 'nil' then
+			if vehicle.plate == LocalVehicles[i].plate then
+				DeleteEntity(LocalVehicles[i].entity)
+				table.remove(LocalVehicles, i)
+			end
+		end
+	end
+end
+
+-- Impound vehicle for esx_policejob
+
+function ImpoundVehicle(vehicle)
+	for i = 1, #LocalVehicles do
+		if vehicle == LocalVehicles[i].entity then
+			ESX.TriggerServerCallback("esx_realparking:impoundVehicle", function(callback)
+				if callback.status then
+					DeleteEntity(LocalVehicles[i].entity)
+					table.remove(LocalVehicles, i)
+				end
+			end, LocalVehicles[i])
+		end
+	end
 end
 
 -- Just some help text
@@ -154,13 +241,16 @@ end
 -- Main thread
 
 Citizen.CreateThread(function()
-    while ESX == nil do
-        Citizen.Wait(10)
-        TriggerEvent("esx:getSharedObject", function(obj)
-            ESX = obj
-        end)
-    end
+	while ESX == nil do
+		Citizen.Wait(10)
+		TriggerEvent("esx:getSharedObject", function(obj)
+			ESX = obj
+		end)
+	end
 	Wait(1000)
+	while not ESX.IsPlayerLoaded() do
+		Citizen.Wait(10)
+	end
 	PlayerData = ESX.GetPlayerData()
 	ESX.TriggerServerCallback("esx_realparking:getPlayerIdentifier", function(callback)
 		PlayerIdentifier = callback
@@ -168,20 +258,6 @@ Citizen.CreateThread(function()
 		Citizen.Wait(500)
 		TriggerServerEvent("esx_realparking:refreshVehicles")
 	end)
-end)
-
--- Creating blips
-
-Citizen.CreateThread(function()
-	for k, v in pairs(Config.ParkingLocations) do
-		local tempBlip = AddBlipForCoord(v.enter.x, v.enter.y, v.enter.z)
-		SetBlipSprite(tempBlip, 523)
-		SetBlipColour(tempBlip, 11)
-		SetBlipAsShortRange(tempBlip, true)
-		BeginTextCommandSetBlipName("STRING")
-		AddTextComponentString(v.name)
-		EndTextCommandSetBlipName(tempBlip)
-	end
 end)
 
 -- Draw text thread
@@ -202,6 +278,20 @@ Citizen.CreateThread(function()
 				Draw3DText(v.data.location.x, v.data.location.y, v.data.location.z - 0.2, string.format(Config.Locales["plate"], v.plate), 0, 0.05, 0.05)
 			end
 		end
+	end
+end)
+
+-- Creating blips
+
+Citizen.CreateThread(function()
+	for k, v in pairs(Config.ParkingLocations) do
+		local tempBlip = AddBlipForCoord(v.enter.x, v.enter.y, v.enter.z)
+		SetBlipSprite(tempBlip, 523)
+		SetBlipColour(tempBlip, 11)
+		SetBlipAsShortRange(tempBlip, true)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(v.name)
+		EndTextCommandSetBlipName(tempBlip)
 	end
 end)
 
