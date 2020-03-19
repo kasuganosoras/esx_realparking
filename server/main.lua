@@ -5,7 +5,7 @@
 ESX = nil
 
 TriggerEvent("esx:getSharedObject", function(response)
-    ESX = response
+	ESX = response
 end)
 
 -- When the client request to refresh the vehicles
@@ -24,8 +24,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 	local isFound = false
 	FindPlayerVehicles(xPlayer.identifier, function(vehicles)
 		for k, v in pairs(vehicles) do
-			print(string.trim(plate), string.trim(v.plate))
-			if string.trim(plate) == string.trim(v.plate) then
+			if type(v.plate) ~= 'nil' and string.trim(plate) == string.trim(v.plate) then
 				isFound = true
 			end		
 		end
@@ -62,7 +61,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 						message = Config.Locales["car_saved"],
 					})
 					Wait(100)
-					RefreshVehicles(xPlayer)
+					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = GetPlayerName(xPlayer.source)})
 				end
 			end)
 		else
@@ -82,8 +81,7 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 	local isFound = false
 	FindPlayerVehicles(xPlayer.identifier, function(vehicles)
 		for k, v in pairs(vehicles) do
-			print(string.trim(plate), string.trim(v.plate))
-			if string.trim(plate) == string.trim(v.plate) then
+			if type(v.plate) ~= 'nil' and string.trim(plate) == string.trim(v.plate) then
 				isFound = true
 			end		
 		end
@@ -95,6 +93,10 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 				if type(rs) == 'table' and #rs > 0 and rs[1] ~= nil then
 					local fee         = math.floor(((os.time() - rs[1].time) / 86400) * Config.ParkingLocations[rs[1].parking].fee)
 					local playerMoney = xPlayer.getMoney()
+					local parkingCard = xPlayer.getInventoryItem('parkingcard').count
+					if parkingCard > 0 then
+						fee = 0
+					end
 					if playerMoney >= fee then
 						xPlayer.removeMoney(fee)
 						MySQL.Async.execute('DELETE FROM car_parking WHERE plate = @plate AND owner = @identifier', {
@@ -110,7 +112,9 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 							message = string.format(Config.Locales["pay_success"], fee),
 							vehData = json.decode(rs[1].data),
 						})
-						RefreshVehicles(xPlayer)
+						TriggerClientEvent("esx_realparking:deleteVehicle", -1, {
+							plate = plate
+						})
 					else
 						cb({
 							status  = false,
@@ -133,11 +137,49 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 	end)
 end)
 
+-- When the police impound the car, support for esx_policejob
+
+ESX.RegisterServerCallback("esx_realparking:impoundVehicle", function(source, cb, vehicleData)
+	local xPlayer = ESX.GetPlayerFromId(source)
+    local plate   = vehicleData.plate
+	MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE plate = @plate", {
+		['@plate']      = plate
+	}, function(rs)
+		if type(rs) == 'table' and #rs > 0 and rs[1] ~= nil then
+			print("Police impound the vehicle: ", vehicleData.plate, rs[1].owner)
+			MySQL.Async.execute('DELETE FROM car_parking WHERE plate = @plate AND owner = @identifier', {
+				["@plate"]      = plate,
+				["@identifier"] = rs[1].owner
+			})
+			MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate AND owner = @identifier', {
+				["@plate"]      = plate,
+				["@identifier"] = rs[1].owner
+			})
+			cb({
+				status  = true,
+			})
+			TriggerClientEvent("esx_realparking:deleteVehicle", -1, {
+				plate = plate
+			})
+		else
+			cb({
+				status  = false,
+				message = Config.Locales["invalid_car"],
+			})
+		end
+	end)
+end)
+
 -- Send the identifier to client
 
 ESX.RegisterServerCallback("esx_realparking:getPlayerIdentifier", function(source, cb)
-	local xPlayer = ESX.GetPlayerFromId(source)
-	cb(xPlayer.identifier)
+	local xPlayer  = ESX.GetPlayerFromId(source)
+	local playerId = xPlayer.identifier
+	if type(playerId) ~= 'nil' then
+		cb(playerId)
+	else
+		print("[RealParking][ERROR] Failed to get the player identifier!")
+	end
 end)
 
 -- Refresh client local vehicles entity
