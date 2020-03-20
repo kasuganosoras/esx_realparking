@@ -157,7 +157,8 @@ function RemoveVehicles()
 		while notFound == false and timeOut < 3000 do
 			timeOut = timeOut + 1
 			local veh, distance = ESX.Game.GetClosestVehicle(tmpLoc)
-			if distance <= v.size then
+			local vl            = GetEntityCoords(veh)
+			if vl.x > v.x - v.size and vl.x < v.x + v.size and vl.y > v.y - v.size and vl.y < v.y + v.size and vl.z > v.z - v.height and vl.z < v.z + v.height then
 				if NetworkGetEntityIsLocal(veh) then
 					DeleteEntity(veh)
 				end
