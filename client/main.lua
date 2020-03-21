@@ -8,6 +8,7 @@ LocalVehicles    = {}
 CurrentFee       = nil
 LastPlate        = nil
 PlayerIdentifier = nil
+SpawnedVehicles  = false
 
 -- Refresh the vehicles
 
@@ -53,11 +54,16 @@ function SpawnVehicles(vehicles)
 	Citizen.CreateThread(function()
 		for i = 1, #vehicles, 1 do
 			local vehicleProps = vehicles[i].vehicle.props
+			DeleteLocalVehicle(vehicles[i].vehicle)
 			local carLivery    = -1
 			if type(vehicles[i].vehicle.livery) ~= 'nil' then
 				carLivery = vehicles[i].vehicle.livery
 			end
 			LoadModel(vehicleProps["model"])
+			local ground, posZ = GetGroundZFor_3dCoord(vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z + 999.0, 1)
+			if ground then
+				vehicles[i].vehicle.location.z = posZ
+			end
 			local tempVeh = CreateVehicle(vehicleProps["model"], vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z, vehicles[i].vehicle.location.h, false)
 			ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 			SetVehicleOnGroundProperly(tempVeh)
@@ -78,6 +84,7 @@ function SpawnVehicles(vehicles)
 				owner  = vehicles[i].owner,
 				name   = vehicles[i].name,
 				livery = carLivery,
+				health = vehicles[i].vehicle.health
 			})
 			if LastPlate ~= nil and vehicles[i].plate == LastPlate then
 				TaskWarpPedIntoVehicle(GetPlayerPed(-1), tempVeh, -1)
@@ -94,12 +101,17 @@ end
 
 function SpawnVehicle(vehicleData)
 	Citizen.CreateThread(function()
+		DeleteLocalVehicle(vehicleData.vehicle)
 		local vehicleProps = vehicleData.vehicle.props
 		local carLivery    = -1
 		if type(vehicleData.vehicle.livery) ~= 'nil' then
 			carLivery = vehicleData.vehicle.livery
 		end
 		LoadModel(vehicleProps["model"])
+		local ground, posZ = GetGroundZFor_3dCoord(vehicleData.vehicle.location.x, vehicleData.vehicle.location.y, vehicleData.vehicle.location.z + 999.0, 1)
+		if ground then
+			vehicleData.vehicle.location.z = posZ
+		end
 		local tempVeh = CreateVehicle(vehicleProps["model"], vehicleData.vehicle.location.x, vehicleData.vehicle.location.y, vehicleData.vehicle.location.z, vehicleData.vehicle.location.h, false)
 		ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 		SetVehicleOnGroundProperly(tempVeh)
@@ -107,6 +119,9 @@ function SpawnVehicle(vehicleData)
 		SetModelAsNoLongerNeeded(vehicleProps["model"])
 		SetEntityInvincible(tempVeh, true)
 		SetVehicleLivery(tempVeh, vehicleData.vehicle.livery)
+		SetVehicleEngineHealth(tempVeh, vehicleData.vehicle.health.engine)
+		SetVehicleBodyHealth(tempVeh, vehicleData.vehicle.health.body)
+		SetVehiclePetrolTankHealth(tempVeh, vehicleData.vehicle.health.tank)
 		Wait(100)
 		FreezeEntityPosition(tempVeh, true)
 		if vehicleData.owner ~= PlayerData.identifier then
@@ -120,6 +135,7 @@ function SpawnVehicle(vehicleData)
 			owner  = vehicleData.owner,
 			name   = vehicleData.name,
 			livery = carLivery,
+			health = vehicleData.vehicle.health,
 		})
 		if LastPlate ~= nil and vehicleData.plate == LastPlate then
 			TaskWarpPedIntoVehicle(GetPlayerPed(-1), tempVeh, -1)
@@ -133,12 +149,21 @@ end
 -- When player drive the car
 
 function DriveVehicle(vehicle)
+	-- Delete the local entity first
+	DeleteNearVehicle(vector3(vehicle.location.x, vehicle.location.y, vehicle.location.z))
 	local vehicleProps = vehicle.props
 	LoadModel(vehicleProps["model"])
+	local ground, posZ = GetGroundZFor_3dCoord(vehicle.location.x, vehicle.location.y, vehicle.location.z + 999.0, 1)
+	if ground then
+		vehicle.location.z = posZ
+	end
 	local tempVeh = CreateVehicle(vehicleProps["model"], vehicle.location.x, vehicle.location.y, vehicle.location.z, vehicle.location.h, true)
 	ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 	SetVehicleOnGroundProperly(tempVeh)
 	SetVehicleLivery(tempVeh, vehicle.livery)
+	SetVehicleEngineHealth(tempVeh, vehicle.health.engine)
+	SetVehicleBodyHealth(tempVeh, vehicle.health.body)
+	SetVehiclePetrolTankHealth(tempVeh, vehicle.health.tank)
 	TaskWarpPedIntoVehicle(GetPlayerPed(-1), tempVeh, -1)
 end
 
@@ -179,6 +204,20 @@ function DeleteLocalVehicle(vehicle)
 				DeleteEntity(LocalVehicles[i].entity)
 				table.remove(LocalVehicles, i)
 			end
+		end
+	end
+end
+
+-- Delete the vehicle near the location
+
+function DeleteNearVehicle(location)
+	local veh, distance = ESX.Game.GetClosestVehicle(location)
+	if distance <= 1 then
+		for i = 1, #LocalVehicles do
+			if LocalVehicles[i].entity == veh then
+				table.remove(LocalVehicles, i)
+			end
+			DeleteEntity(veh)
 		end
 	end
 end
@@ -257,8 +296,37 @@ Citizen.CreateThread(function()
 		PlayerIdentifier = callback
 		RemoveVehicles()
 		Citizen.Wait(500)
-		TriggerServerEvent("esx_realparking:refreshVehicles")
 	end)
+end)
+
+-- Check distance
+
+Citizen.CreateThread(function()
+	while true do
+		Wait(0)
+		local pl = GetEntityCoords(GetPlayerPed(-1))
+		local inParking = false
+		for k, v in pairs(Config.ParkingLocations) do
+			if GetDistanceBetweenCoords(pl.x, pl.y, pl.z, v.x, v.y, v.z, true) < v.size + 50.0 then
+				inParking = true
+			end
+		end
+		if inParking then
+			if not SpawnedVehicles then
+				print("Spawned the vehicles")
+				RemoveVehicles()
+				TriggerServerEvent("esx_realparking:refreshVehicles")
+				SpawnedVehicles = true
+				Wait(2000)
+			end
+		else
+			if SpawnedVehicles then
+				print("Removed the vehicles")
+				RemoveVehicles()
+				SpawnedVehicles = false
+			end
+		end
+	end
 end)
 
 -- Draw text thread
@@ -339,10 +407,13 @@ Citizen.CreateThread(function()
 					local veh = GetVehiclePedIsIn(GetPlayerPed(-1))
 					if veh ~= 0 then
 						if IsThisModelACar(GetEntityModel(veh)) then
-							local vehProps = ESX.Game.GetVehicleProperties(veh)
-							local vehPos   = GetEntityCoords(veh)
-							local vehHead  = GetEntityHeading(veh)
-							LastPlate      = vehProps.plate
+							local vehProps  = ESX.Game.GetVehicleProperties(veh)
+							local vehPos    = GetEntityCoords(veh)
+							local vehHead   = GetEntityHeading(veh)
+							local engHealth = GetVehicleEngineHealth(veh)
+							local bdyHealth = GetVehicleBodyHealth(veh)
+							local tnkHealth = GetVehiclePetrolTankHealth(veh)
+							LastPlate       = vehProps.plate
 							DoScreenFadeOut(250)
 							Wait(500)
 							ESX.TriggerServerCallback("esx_realparking:saveCar", function(callback)
@@ -359,6 +430,11 @@ Citizen.CreateThread(function()
 								props    = vehProps,
 								parking  = parkName,
 								livery   = GetVehicleLivery(veh),
+								health   = {
+									engine = engHealth,
+									body   = bdyHealth,
+									tank   = tnkHealth
+								}
 							})
 						else
 							ESX.ShowNotification(Config.Locales["only_allow_car"])
