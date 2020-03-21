@@ -338,13 +338,13 @@ Citizen.CreateThread(function()
 		for k, v in pairs(Config.ParkingLocations) do
 			if GetDistanceBetweenCoords(pl.x, pl.y, pl.z, v.enter.x, v.enter.y, v.enter.z, true) < 20 then
 				Draw3DText(v.enter.x, v.enter.y, v.enter.z, v.name, 0, 0.2, 0.2)
-				Draw3DText(v.enter.x, v.enter.y, v.enter.z - 0.5, string.format(Config.Locales["parking_fee"], v.fee), 0, 0.1, 0.1)
+				Draw3DText(v.enter.x, v.enter.y, v.enter.z - 0.5, string.format(_U("parking_fee", v.fee)), 0, 0.1, 0.1)
 			end
 		end
 		for k, v in pairs(LocalVehicles) do
 			if GetDistanceBetweenCoords(pl.x, pl.y, pl.z, v.data.location.x, v.data.location.y, v.data.location.z, true) < 3.0 then
-				Draw3DText(v.data.location.x, v.data.location.y, v.data.location.z, string.format(Config.Locales["owner"], v.name), 0, 0.08, 0.08)
-				Draw3DText(v.data.location.x, v.data.location.y, v.data.location.z - 0.2, string.format(Config.Locales["plate"], v.plate), 0, 0.05, 0.05)
+				Draw3DText(v.data.location.x, v.data.location.y, v.data.location.z, string.format(_U("owner", v.name)), 0, 0.08, 0.08)
+				Draw3DText(v.data.location.x, v.data.location.y, v.data.location.z - 0.2, string.format(_U("plate", v.plate)), 0, 0.05, 0.05)
 			end
 		end
 	end
@@ -381,9 +381,9 @@ Citizen.CreateThread(function()
 		if inParking and IsPedInAnyVehicle(GetPlayerPed(-1)) then
 			local storedVehicle = GetPedInStoredCar(GetPlayerPed(-1))
 			if storedVehicle ~= false then
-				DisplayHelpText(string.format(Config.Locales["need_parking_fee"], storedVehicle.fee))
+				DisplayHelpText(string.format(_U("need_parking_fee", storedVehicle.fee)))
 			else
-				DisplayHelpText(Config.Locales["press_to_save"])
+				DisplayHelpText(_U("press_to_save"))
 			end
 			if IsControlJustReleased(0, 51) then
 				if storedVehicle ~= false then
@@ -437,7 +437,7 @@ Citizen.CreateThread(function()
 								}
 							})
 						else
-							ESX.ShowNotification(Config.Locales["only_allow_car"])
+							ESX.ShowNotification(_U("only_allow_car"))
 						end
 					end
 				end
