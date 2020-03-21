@@ -31,7 +31,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 		if GetVehicleNumOfParking(vehicleData.parking) > Config.ParkingLocations[vehicleData.parking].maxcar then
 			cb({
 				status  = false,
-				message = Config.Locales["parking_full"],
+				message = _U("parking_full"),
 			})
 		elseif isFound then
 			MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE owner = @identifier AND plate = @plate", {
@@ -41,7 +41,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 				if type(rs) == 'table' and #rs > 0 then
 					cb({
 						status  = false,
-						message = Config.Locales["already_parking"],
+						message = _U("already_parking"),
 					})
 				else
 					MySQL.Async.execute("INSERT INTO car_parking (owner, plate, data, time, parking) VALUES (@owner, @plate, @data, @time, @parking)", {
@@ -58,7 +58,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 					})
 					cb({
 						status  = true,
-						message = Config.Locales["car_saved"],
+						message = _U("car_saved"),
 					})
 					Wait(100)
 					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = xPlayer.getName()})
@@ -67,7 +67,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 		else
 			cb({
 				status  = false,
-				message = Config.Locales["not_your_car"],
+				message = _U("not_your_car"),
 			})
 		end
 	end)
@@ -109,7 +109,7 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 						})
 						cb({
 							status  = true,
-							message = string.format(Config.Locales["pay_success"], fee),
+							message = string.format(_U("pay_success", fee)),
 							vehData = json.decode(rs[1].data),
 						})
 						TriggerClientEvent("esx_realparking:deleteVehicle", -1, {
@@ -118,20 +118,20 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 					else
 						cb({
 							status  = false,
-							message = Config.Locales["not_enough_money"],
+							message = _U("not_enough_money"),
 						})
 					end
 				else
 					cb({
 						status  = false,
-						message = Config.Locales["invalid_car"],
+						message = _U("invalid_car"),
 					})
 				end
 			end)
 		else
 			cb({
 				status  = false,
-				message = Config.Locales["not_your_car"],
+				message = _U("not_your_car"),
 			})
 		end
 	end)
@@ -164,7 +164,7 @@ ESX.RegisterServerCallback("esx_realparking:impoundVehicle", function(source, cb
 		else
 			cb({
 				status  = false,
-				message = Config.Locales["invalid_car"],
+				message = _U("invalid_car"),
 			})
 		end
 	end)
