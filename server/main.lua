@@ -61,7 +61,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 						message = Config.Locales["car_saved"],
 					})
 					Wait(100)
-					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = GetPlayerName(xPlayer.source)})
+					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = xPlayer.getName()})
 				end
 			end)
 		else
@@ -190,10 +190,19 @@ function RefreshVehicles(xPlayer, src)
 	end
 	local vehicles = {}
 	local nameList = {}
-	local nrs      = MySQL.Sync.fetchAll("SELECT identifier, name FROM users")
-	if type(nrs) == 'table' then
-		for k, v in pairs(nrs) do
-			nameList[v.identifier] = v.name
+	if Config.UsingOldESX then
+		local nrs = MySQL.Sync.fetchAll("SELECT identifier, name FROM users")
+		if type(nrs) == 'table' then
+			for k, v in pairs(nrs) do
+				nameList[v.identifier] = v.name
+			end
+		end
+	else
+		local nrs = MySQL.Sync.fetchAll("SELECT identifier, firstname, lastname FROM users")
+		if type(nrs) == 'table' then
+			for k, v in pairs(nrs) do
+				nameList[v.identifier] = v.firstname .. " " .. v.lastname
+			end
 		end
 	end
 	MySQL.Async.fetchAll("SELECT * FROM car_parking", {}, function(rs) 
