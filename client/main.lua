@@ -60,10 +60,6 @@ function SpawnVehicles(vehicles)
 				carLivery = vehicles[i].vehicle.livery
 			end
 			LoadModel(vehicleProps["model"])
-			local ground, posZ = GetGroundZFor_3dCoord(vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z + 999.0, 1)
-			if ground then
-				vehicles[i].vehicle.location.z = posZ
-			end
 			local tempVeh = CreateVehicle(vehicleProps["model"], vehicles[i].vehicle.location.x, vehicles[i].vehicle.location.y, vehicles[i].vehicle.location.z, vehicles[i].vehicle.location.h, false)
 			ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 			SetVehicleOnGroundProperly(tempVeh)
@@ -108,10 +104,6 @@ function SpawnVehicle(vehicleData)
 			carLivery = vehicleData.vehicle.livery
 		end
 		LoadModel(vehicleProps["model"])
-		local ground, posZ = GetGroundZFor_3dCoord(vehicleData.vehicle.location.x, vehicleData.vehicle.location.y, vehicleData.vehicle.location.z + 999.0, 1)
-		if ground then
-			vehicleData.vehicle.location.z = posZ
-		end
 		local tempVeh = CreateVehicle(vehicleProps["model"], vehicleData.vehicle.location.x, vehicleData.vehicle.location.y, vehicleData.vehicle.location.z, vehicleData.vehicle.location.h, false)
 		ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 		SetVehicleOnGroundProperly(tempVeh)
@@ -153,10 +145,6 @@ function DriveVehicle(vehicle)
 	DeleteNearVehicle(vector3(vehicle.location.x, vehicle.location.y, vehicle.location.z))
 	local vehicleProps = vehicle.props
 	LoadModel(vehicleProps["model"])
-	local ground, posZ = GetGroundZFor_3dCoord(vehicle.location.x, vehicle.location.y, vehicle.location.z + 999.0, 1)
-	if ground then
-		vehicle.location.z = posZ
-	end
 	local tempVeh = CreateVehicle(vehicleProps["model"], vehicle.location.x, vehicle.location.y, vehicle.location.z, vehicle.location.h, true)
 	ESX.Game.SetVehicleProperties(tempVeh, vehicleProps)
 	SetVehicleOnGroundProperly(tempVeh)
@@ -185,6 +173,8 @@ function RemoveVehicles()
 			local vl            = GetEntityCoords(veh)
 			if vl.x > v.x - v.size and vl.x < v.x + v.size and vl.y > v.y - v.size and vl.y < v.y + v.size and vl.z > v.z - v.height and vl.z < v.z + v.height then
 				if NetworkGetEntityIsLocal(veh) then
+					local tmpModel = GetEntityModel(veh)
+					SetModelAsNoLongerNeeded(tmpModel)
 					DeleteEntity(veh)
 				end
 			else
@@ -201,6 +191,8 @@ function DeleteLocalVehicle(vehicle)
 	for i = 1, #LocalVehicles do
 		if type(vehicle.plate) ~= 'nil' and type(LocalVehicles[i].plate) ~= 'nil' then
 			if vehicle.plate == LocalVehicles[i].plate then
+				local tmpModel = GetEntityModel(veh)
+				SetModelAsNoLongerNeeded(tmpModel)
 				DeleteEntity(LocalVehicles[i].entity)
 				table.remove(LocalVehicles, i)
 			end
@@ -217,6 +209,8 @@ function DeleteNearVehicle(location)
 			if LocalVehicles[i].entity == veh then
 				table.remove(LocalVehicles, i)
 			end
+			local tmpModel = GetEntityModel(veh)
+			SetModelAsNoLongerNeeded(tmpModel)
 			DeleteEntity(veh)
 		end
 	end
@@ -302,20 +296,25 @@ end)
 -- Check distance
 
 Citizen.CreateThread(function()
+	while PlayerIdentifier == nil do
+		Citizen.Wait(10)
+	end
 	while true do
 		Wait(0)
 		local pl = GetEntityCoords(GetPlayerPed(-1))
 		local inParking = false
+		local crParking = nil
 		for k, v in pairs(Config.ParkingLocations) do
-			if GetDistanceBetweenCoords(pl.x, pl.y, pl.z, v.x, v.y, v.z, true) < v.size + 50.0 then
+			if GetDistanceBetweenCoords(pl.x, pl.y, pl.z, v.x, v.y, v.z, true) < v.size + 20.0 then
 				inParking = true
+				crParking = k
 			end
 		end
 		if inParking then
 			if not SpawnedVehicles then
 				print("Spawned the vehicles")
 				RemoveVehicles()
-				TriggerServerEvent("esx_realparking:refreshVehicles")
+				TriggerServerEvent("esx_realparking:refreshVehicles", crParking)
 				SpawnedVehicles = true
 				Wait(2000)
 			end
