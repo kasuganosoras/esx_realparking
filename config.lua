@@ -48,7 +48,7 @@ Config.ParkingLocations = {
 		z      = 103.32,
 		size   = 20.0,         -- The parking range radius (Horizontal)
 		height = 10.0,         -- The parking range radius (Vertical)
-		name   = "公共停車場", -- The name of the parking (blips)
+		name   = "Public Parking", -- The name of the parking (blips)
 		fee    = 700,          -- How much parking fee per day (Real life time), set false to disable
 		enter  = {x = 364.77, y = 298.98, z = 103.5},
 		maxcar = 15,
