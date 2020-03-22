@@ -11,9 +11,9 @@ end)
 -- When the client request to refresh the vehicles
 
 RegisterServerEvent('esx_realparking:refreshVehicles')
-AddEventHandler('esx_realparking:refreshVehicles', function()
+AddEventHandler('esx_realparking:refreshVehicles', function(parkingName)
 	local xPlayer = ESX.GetPlayerFromId(source)
-	RefreshVehicles(xPlayer, source)
+	RefreshVehicles(xPlayer, source, parkingName)
 end)
 
 -- Save the car to database
@@ -184,7 +184,7 @@ end)
 
 -- Refresh client local vehicles entity
 
-function RefreshVehicles(xPlayer, src)
+function RefreshVehicles(xPlayer, src, parkingName)
 	if src == nil then
 		src = -1
 	end
@@ -205,7 +205,15 @@ function RefreshVehicles(xPlayer, src)
 			end
 		end
 	end
-	MySQL.Async.fetchAll("SELECT * FROM car_parking", {}, function(rs) 
+	local querySQL = "SELECT * FROM car_parking"
+	local queryArg = {}
+	if parkingName ~= nil then
+		querySQL = "SELECT * FROM car_parking WHERE parking = @parkingName"
+		queryArg = {
+			['@parkingName'] = parkingName
+		}
+	end
+	MySQL.Async.fetchAll(querySQL, queryArg, function(rs) 
 		for k, v in pairs(rs) do
 			local vehicle = json.decode(v.data)
 			local plate   = v.plate
