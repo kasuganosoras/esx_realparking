@@ -405,7 +405,7 @@ Citizen.CreateThread(function()
 				else
 					local veh = GetVehiclePedIsIn(GetPlayerPed(-1))
 					if veh ~= 0 then
-						if IsThisModelACar(GetEntityModel(veh)) then
+						if IsThisModelACar(GetEntityModel(veh)) or IsThisModelABike(GetEntityModel(veh)) or IsThisModelABicycle(GetEntityModel(veh)) then
 							local vehProps  = ESX.Game.GetVehicleProperties(veh)
 							local vehPos    = GetEntityCoords(veh)
 							local vehHead   = GetEntityHeading(veh)
