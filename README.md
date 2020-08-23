@@ -3,6 +3,8 @@ A real car parking script for FiveM
 
 ![Parking example](https://i.imgur.com/J6SqHBK.png)
 
+> This script maybe has some bugs or performance issues, I need some times to fix it.
+
 ## Features
 
 - Store the car like the real life
