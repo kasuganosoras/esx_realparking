@@ -1,0 +1,15 @@
+Locales['es'] = {
+	["only_allow_car"]   = "Solo puedes guardar coches aquí",
+	["car_saved"]        = "Tu coche ha sido guardado",
+	["press_to_save"]    = "Presiona ~INPUT_CONTEXT~ para guardar tu coche",
+	["not_your_car"]     = "Tiene que ser tu coche para poder guardarlo",
+	["need_parking_fee"] = "Presiona ~INPUT_CONTEXT~ para pagar las tasas de aparcamiento por ~g~$%s~s~",
+	["not_enough_money"] = "No tienes suficiente dinero",
+	["parking_fee"]      = "Tasas de Apartamiento: ~g~$%s/día",
+	["pay_success"]      = "Has pagado las tasas de aparcamiento por ~g~$%s~s~ y ya puede recoger tu coche",
+	["parking_full"]     = "El aparcamiento está completo,no puedes aparcar aquí",
+	["invalid_car"]      = "No has guardado el vehículo aquí o no tienes autorización para conducir este coche",
+	["already_parking"]  = "Este aparcamiento ya ha guardado un coche con la misma matrícula",
+	["owner"]            = "Dueño: ~y~%s~s~",
+	["plate"]            = "Matrícula: ~g~%s~s~",
+}
