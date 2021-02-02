@@ -12,6 +12,7 @@ client_scripts {
 	'locales/zh.lua',
 	'locales/es.lua',
 	'locales/de.lua',
+	'locales/bg.lua',
 	'client/main.lua'
 }
 
@@ -23,5 +24,6 @@ server_scripts {
 	'locales/zh.lua',
 	'locales/es.lua',
 	'locales/de.lua',
+	'locales/bg.lua',
 	'server/main.lua'
 }
