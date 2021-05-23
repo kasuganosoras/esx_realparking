@@ -61,6 +61,11 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 									['@vehicle'] = json.encode(vehicleData.props),
 									['@plate'] =  plate
 								})
+					MySQL.Async.execute('UPDATE owned_vehicles SET owner = @parking WHERE plate = @plate ', {
+						["@plate"]      = plate,
+						["@identifier"] = xPlayer.identifier,
+						["@parking"] = "parking"
+					})
 					cb({
 						status  = true,
 						message = _U("car_saved"),
@@ -84,7 +89,7 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 	local xPlayer = ESX.GetPlayerFromId(source)
     local plate   = vehicleData.plate
 	local isFound = false
-	FindPlayerVehicles(xPlayer.identifier, function(vehicles)
+	FindPlayerVehicles2(xPlayer.identifier, function(vehicles)
 		for k, v in pairs(vehicles) do
 			if type(v.plate) ~= 'nil' and string.trim(plate) == string.trim(v.plate) then
 				isFound = true
@@ -108,10 +113,13 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 							["@plate"]      = plate,
 							["@identifier"] = xPlayer.identifier
 						})
-						MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate AND owner = @identifier', {
-							["@plate"]      = plate,
-							["@identifier"] = xPlayer.identifier
+						MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate, {
+							["@plate"]      = plate,							
 						})
+						MySQL.Async.execute('UPDATE owned_vehicles SET owner = @identifier  WHERE plate = @plate', {
+						["@plate"]      = plate,
+						["@identifier"] = xPlayer.identifier
+					})
 						cb({
 							status  = true,
 							message = string.format(_U("pay_success", fee)),
@@ -156,7 +164,10 @@ ESX.RegisterServerCallback("esx_realparking:impoundVehicle", function(source, cb
 				["@plate"]      = plate,
 				["@identifier"] = rs[1].owner
 			})
-			MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate AND owner = @identifier', {
+			MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate', {
+				["@plate"]      = plate,				
+			})
+			MySQL.Async.execute('UPDATE owned_vehicles SET owner = @identifier WHERE plate = @plate', {
 				["@plate"]      = plate,
 				["@identifier"] = rs[1].owner
 			})
@@ -256,7 +267,17 @@ function FindPlayerVehicles(id, cb)
 		cb(vehicles)
 	end)
 end
-
+function FindPlayerVehicles2(id, cb)
+	local vehicles = {}
+	MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE owner = @identifier", {['@identifier'] = id}, function(rs)
+		for k, v in pairs(rs) do
+			local vehicle = json.decode(v.vehicle)
+			local plate = v.plate
+			table.insert(vehicles, {vehicle = vehicle, plate = plate})
+		end
+		cb(vehicles)
+	end)
+end
 -- Clear the text
 
 string.trim = function(text)
