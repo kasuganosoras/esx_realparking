@@ -113,7 +113,7 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 							["@plate"]      = plate,
 							["@identifier"] = xPlayer.identifier
 						})
-						MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate, {
+						MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate', {
 							["@plate"]      = plate,							
 						})
 						MySQL.Async.execute('UPDATE owned_vehicles SET owner = @identifier  WHERE plate = @plate', {
