@@ -3,12 +3,11 @@ A real car parking script for FiveM
 
 ![Parking example](https://i.imgur.com/J6SqHBK.png)
 
-> This script maybe has some bugs or performance issues, I need some times to fix it.
-
 ## Features
 
 - Store the car like the real life
 - Support esx_vehicleshop
+- Parking anywhere
 - Parking fees for player
 
 ## Requirements
@@ -46,7 +45,7 @@ start esx_realparking
 
 ## Videos
 
-https://youtu.be/NPBoPn4cqLI
+https://www.youtube.com/watch?v=sDsqSuw2yKg
 
 ## Legal
 
@@ -54,7 +53,7 @@ https://youtu.be/NPBoPn4cqLI
 
 esx_realparking - car parking script for ESX
 
-Copyright (C) 2020 Akkariin
+Copyright (C) 2021 Akkariin
 
 This program Is free software: you can redistribute it And/Or modify it under the terms Of the GNU General Public License As published by the Free Software Foundation, either version 3 Of the License, Or (at your option) any later version.
 
