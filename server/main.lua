@@ -71,7 +71,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 						message = _U("car_saved"),
 					})
 					Wait(100)
-					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = xPlayer.getName()})
+					TriggerClientEvent("esx_realparking:addVehicle", -1, {vehicle = vehicleData, plate = plate, fee = 0.0, owner = xPlayer.identifier, name = xPlayer.getName()}, xPlayer.source)
 				end
 			end)
 		else
@@ -217,7 +217,7 @@ function RefreshVehicles(xPlayer, src, parkingName)
 		local nrs = MySQL.Sync.fetchAll("SELECT identifier, firstname, lastname FROM users")
 		if type(nrs) == 'table' then
 			for k, v in pairs(nrs) do
-				nameList[v.identifier] = v.firstname .. " " .. v.lastname
+				nameList[v.identifier] = tostring(v.firstname) .. " " .. tostring(v.lastname)
 			end
 		end
 	end

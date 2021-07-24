@@ -12,4 +12,5 @@ Locales['en'] = {
 	["already_parking"]  = "This car parking has already stored a car with same plate",
 	["owner"]            = "Owner: ~y~%s~s~",
 	["plate"]            = "Plate: ~g~%s~s~",
+	["stop_the_car"]     = "You should stop the car first",
 }

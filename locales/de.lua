@@ -13,4 +13,5 @@ Locales['de'] = {
 	["already_parking"]  = "Dieses Auto ist schon auf dem Parkplatz mit dem selben Nummernschild",
 	["owner"]            = "Besitzer: ~y~%s~s~",
 	["plate"]            = "Nummernschild: ~g~%s~s~",
+	["stop_the_car"]     = "You should stop the car first",
 }

@@ -12,4 +12,5 @@ Locales['zh'] = {
 	["already_parking"]  = "這個停車場已經停著一輛相同車牌的車了",
 	["owner"]            = "車主：~y~%s~s~",
 	["plate"]            = "車牌：~g~%s~s~",
+	["stop_the_car"]     = "請先把車停下來才能保存",
 }

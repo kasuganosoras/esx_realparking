@@ -12,4 +12,5 @@ Locales['es'] = {
 	["already_parking"]  = "Este aparcamiento ya ha guardado un coche con la misma matrícula",
 	["owner"]            = "Dueño: ~y~%s~s~",
 	["plate"]            = "Matrícula: ~g~%s~s~",
+	["stop_the_car"]     = "You should stop the car first",
 }

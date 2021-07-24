@@ -12,4 +12,5 @@ Locales['fr'] = {
 	["already_parking"]  = "Ce parking a déjà stocké une voiture avec la même plaque",
 	["owner"]            = "Propriétaire: ~y~%s~s~",
 	["plate"]            = "Plaque d'immatriculation: ~g~%s~s~",
+	["stop_the_car"]     = "You should stop the car first",
 }

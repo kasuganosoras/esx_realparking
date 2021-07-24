@@ -12,4 +12,5 @@ Locales['en'] = {
 	["already_parking"]  = "Съществува автомобил с Вашият регистрационен номер на този паркинг",
 	["owner"]            = "Собственик: ~y~%s~s~",
 	["plate"]            = "Регистрационен номер: ~g~%s~s~",
+	["stop_the_car"]     = "You should stop the car first",
 }
