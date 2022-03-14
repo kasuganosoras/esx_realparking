@@ -61,7 +61,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 									['@vehicle'] = json.encode(vehicleData.props),
 									['@plate'] =  plate
 								})
-					MySQL.Async.execute('UPDATE owned_vehicles SET owner = @parking WHERE plate = @plate ', {
+					MySQL.Async.execute('UPDATE owned_vehicles SET parking = @parking WHERE plate = @plate AND owner = @identifier', {
 						["@plate"]      = plate,
 						["@identifier"] = xPlayer.identifier,
 						["@parking"] = "parking"
