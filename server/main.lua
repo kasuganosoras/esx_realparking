@@ -34,7 +34,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 				message = _U("parking_full"),
 			})
 		elseif isFound then
-			MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE owner = @identifier AND plate = @plate", {
+			MySQL.Async.fetchAll("SELECT * FROM `car_parking` WHERE `owner` = @identifier AND `plate` = @plate", {
 				['@identifier'] = xPlayer.identifier,
 				['@plate']      = plate
 			}, function(rs)
@@ -44,7 +44,7 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 						message = _U("already_parking"),
 					})
 				else
-					MySQL.Async.execute("INSERT INTO car_parking (owner, plate, data, time, parking) VALUES (@owner, @plate, @data, @time, @parking)", {
+					MySQL.Async.execute("INSERT INTO `car_parking` (`owner`, `plate`, `data`, `time`, `parking`) VALUES (@owner, @plate, @data, @time, @parking)", {
 							["@owner"]   = xPlayer.identifier,
 							["@plate"]   = plate,
 							["@data"]    = json.encode(vehicleData),
@@ -52,16 +52,16 @@ ESX.RegisterServerCallback("esx_realparking:saveCar", function(source, cb, vehic
 							["@parking"] = vehicleData.parking
 						}
 					)
-					MySQL.Async.execute('UPDATE owned_vehicles SET stored = 2 WHERE plate = @plate AND owner = @identifier', {
+					MySQL.Async.execute('UPDATE `owned_vehicles` SET `stored` = 2 WHERE `plate` = @plate AND `owner` = @identifier', {
 						["@plate"]      = plate,
 						["@identifier"] = xPlayer.identifier
 					})
-					MySQL.Async.execute('UPDATE owned_vehicles SET vehicle = @vehicle WHERE owner = @owner AND plate = @plate', {
+					MySQL.Async.execute('UPDATE `owned_vehicles` SET `vehicle` = @vehicle WHERE `owner` = @owner AND `plate` = @plate', {
 									['@owner'] = xPlayer.identifier,
 									['@vehicle'] = json.encode(vehicleData.props),
 									['@plate'] =  plate
 								})
-					MySQL.Async.execute('UPDATE owned_vehicles SET parking = @parking WHERE plate = @plate AND owner = @identifier', {
+					MySQL.Async.execute('UPDATE `owned_vehicles` SET `parking` = @parking WHERE `plate` = @plate AND `owner` = @identifier', {
 						["@plate"]      = plate,
 						["@identifier"] = xPlayer.identifier,
 						["@parking"] = "parking"
@@ -96,7 +96,7 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 			end		
 		end
 		if isFound then
-			MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE owner = @identifier AND plate = @plate", {
+			MySQL.Async.fetchAll("SELECT * FROM `car_parking` WHERE `owner` = @identifier AND `plate` = @plate", {
 				['@identifier'] = xPlayer.identifier,
 				['@plate']      = plate
 			}, function(rs)
@@ -109,14 +109,14 @@ ESX.RegisterServerCallback("esx_realparking:driveCar", function(source, cb, vehi
 					end
 					if playerMoney >= fee then
 						xPlayer.removeMoney(fee)
-						MySQL.Async.execute('DELETE FROM car_parking WHERE plate = @plate AND owner = @identifier', {
+						MySQL.Async.execute('DELETE FROM `car_parking` WHERE `plate` = @plate AND `owner` = @identifier', {
 							["@plate"]      = plate,
 							["@identifier"] = xPlayer.identifier
 						})
-						MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate', {
+						MySQL.Async.execute('UPDATE `owned_vehicles` SET `stored` = 0 WHERE `plate` = @plate', {
 							["@plate"]      = plate,							
 						})
-						MySQL.Async.execute('UPDATE owned_vehicles SET owner = @identifier  WHERE plate = @plate', {
+						MySQL.Async.execute('UPDATE `owned_vehicles` SET `owner` = @identifier  WHERE `plate` = @plate', {
 						["@plate"]      = plate,
 						["@identifier"] = xPlayer.identifier
 					})
@@ -155,19 +155,19 @@ end)
 ESX.RegisterServerCallback("esx_realparking:impoundVehicle", function(source, cb, vehicleData)
 	local xPlayer = ESX.GetPlayerFromId(source)
     local plate   = vehicleData.plate
-	MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE plate = @plate", {
+	MySQL.Async.fetchAll("SELECT * FROM `car_parking` WHERE `plate` = @plate", {
 		['@plate']      = plate
 	}, function(rs)
 		if type(rs) == 'table' and #rs > 0 and rs[1] ~= nil then
 			print("Police impound the vehicle: ", vehicleData.plate, rs[1].owner)
-			MySQL.Async.execute('DELETE FROM car_parking WHERE plate = @plate AND owner = @identifier', {
+			MySQL.Async.execute('DELETE FROM `car_parking` WHERE `plate` = @plate AND `owner` = @identifier', {
 				["@plate"]      = plate,
 				["@identifier"] = rs[1].owner
 			})
-			MySQL.Async.execute('UPDATE owned_vehicles SET stored = 0 WHERE plate = @plate', {
+			MySQL.Async.execute('UPDATE `owned_vehicles` SET `stored` = 0 WHERE `plate` = @plate', {
 				["@plate"]      = plate,				
 			})
-			MySQL.Async.execute('UPDATE owned_vehicles SET owner = @identifier WHERE plate = @plate', {
+			MySQL.Async.execute('UPDATE `owned_vehicles` SET `owner` = @identifier WHERE `plate` = @plate', {
 				["@plate"]      = plate,
 				["@identifier"] = rs[1].owner
 			})
@@ -207,24 +207,24 @@ function RefreshVehicles(xPlayer, src, parkingName)
 	local vehicles = {}
 	local nameList = {}
 	if Config.UsingOldESX then
-		local nrs = MySQL.Sync.fetchAll("SELECT identifier, name FROM users")
+		local nrs = MySQL.Sync.fetchAll("SELECT `identifier`, `name` FROM `users`")
 		if type(nrs) == 'table' then
 			for k, v in pairs(nrs) do
 				nameList[v.identifier] = v.name
 			end
 		end
 	else
-		local nrs = MySQL.Sync.fetchAll("SELECT identifier, firstname, lastname FROM users")
+		local nrs = MySQL.Sync.fetchAll("SELECT `identifier`, `firstname`, `lastname` FROM `users`")
 		if type(nrs) == 'table' then
 			for k, v in pairs(nrs) do
 				nameList[v.identifier] = tostring(v.firstname) .. " " .. tostring(v.lastname)
 			end
 		end
 	end
-	local querySQL = "SELECT * FROM car_parking"
+	local querySQL = "SELECT * FROM `car_parking`"
 	local queryArg = {}
 	if parkingName ~= nil then
-		querySQL = "SELECT * FROM car_parking WHERE parking = @parkingName"
+		querySQL = "SELECT * FROM `car_parking` WHERE `parking` = @parkingName"
 		queryArg = {
 			['@parkingName'] = parkingName
 		}
@@ -246,7 +246,7 @@ end
 -- Get the number of the vehicles
 
 function GetVehicleNumOfParking(name)
-	local rs = MySQL.Sync.fetchAll('SELECT id FROM car_parking WHERE parking = @parking', {['@parking'] = name})
+	local rs = MySQL.Sync.fetchAll('SELECT `id` FROM `car_parking` WHERE `parking` = @parking', {['@parking'] = name})
 	if type(rs) == 'table' then
 		return #rs
 	else
@@ -258,7 +258,7 @@ end
 
 function FindPlayerVehicles(id, cb)
 	local vehicles = {}
-	MySQL.Async.fetchAll("SELECT * FROM owned_vehicles WHERE owner = @identifier", {['@identifier'] = id}, function(rs)
+	MySQL.Async.fetchAll("SELECT * FROM `owned_vehicles` WHERE `owner` = @identifier", {['@identifier'] = id}, function(rs)
 		for k, v in pairs(rs) do
 			local vehicle = json.decode(v.vehicle)
 			local plate = v.plate
@@ -269,7 +269,7 @@ function FindPlayerVehicles(id, cb)
 end
 function FindPlayerVehicles2(id, cb)
 	local vehicles = {}
-	MySQL.Async.fetchAll("SELECT * FROM car_parking WHERE owner = @identifier", {['@identifier'] = id}, function(rs)
+	MySQL.Async.fetchAll("SELECT * FROM `car_parking` WHERE `owner` = @identifier", {['@identifier'] = id}, function(rs)
 		for k, v in pairs(rs) do
 			local vehicle = json.decode(v.vehicle)
 			local plate = v.plate
